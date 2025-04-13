@@ -1,11 +1,13 @@
-提供Condition Quantile Estimation的代码，如下
+
+# Code for Conditional Quantile Estimation
+
+The following provides implementations of Conditional Quantile Estimation (CQE) in both TensorFlow and PyTorch.
 
 ---
 
-## 代码实现
+## TensorFlow Implementation
 
 ```python
-# TensorFlow 实现
 import tensorflow as tf
 
 class ConditionQuantileEstimation:
@@ -14,14 +16,16 @@ class ConditionQuantileEstimation:
 
     def get_quans(self, feature, name=''):
         quan_pred = simple_dense_network(
-            feature, [128, self.quan_bins - 1], name + 'quan_s', name + 'quansr_h{}_params', act=tf.nn.relu
+            feature, [128, self.quan_bins - 1],
+            name + 'quan_s', name + 'quansr_h{}_params',
+            act=tf.nn.relu
         )
         quan_pred = tf.math.cumsum(quan_pred, axis=-1)
         return quan_pred
 
-    def get_singal_loss(self, y_true, y_pred, tau=0.5):
+    def get_single_loss(self, y_true, y_pred, tau=0.5):
         """
-        计算 pinball 损失函数。
+        Compute pinball (quantile) loss.
         """
         error = y_true - y_pred
         pinball_loss = tf.reduce_sum(tf.maximum(tau * error, (tau - 1) * error))
@@ -30,15 +34,20 @@ class ConditionQuantileEstimation:
     def get_loss(self, y_true, quan_pred):
         taus = tf.range(self.quan_bins - 1, dtype=tf.float32) / self.quan_bins + 1 / self.quan_bins
         taus = tf.expand_dims(taus, axis=0)
-        loss_quan = self.get_singal_loss(y_true, quan_pred, taus)
+        loss_quan = self.get_single_loss(y_true, quan_pred, taus)
         return loss_quan
+```
 
-# PyTorch 实现
+---
+
+## PyTorch Implementation
+
+```python
 import torch
 
 def quantile_loss(yhat, y):
     """
-    计算 PyTorch 版本的分位数损失。
+    Compute quantile loss in PyTorch.
     """
     N, M = yhat.shape
     quantiles = torch.arange(1, M + 1, dtype=yhat.dtype, device=yhat.device) / (M + 1)
@@ -54,8 +63,7 @@ def quantile_loss(yhat, y):
 
 ---
 
-## 参考
-- TensorFlow 官方文档：[https://www.tensorflow.org](https://www.tensorflow.org)
-- PyTorch 官方文档：[https://pytorch.org](https://pytorch.org)
+## References
 
-
+- TensorFlow Documentation: [https://www.tensorflow.org](https://www.tensorflow.org)  
+- PyTorch Documentation: [https://pytorch.org](https://pytorch.org)
